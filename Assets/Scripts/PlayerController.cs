@@ -49,6 +49,13 @@ public class PlayerController : NetworkBehaviour
         {
             JumpServerRpc();
         }
+
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            RewindSystem rewind = GetComponent<RewindSystem>();
+
+            transform.position = rewind.GetPastPosition(1f);
+        }
     }
 
     [ServerRpc]
