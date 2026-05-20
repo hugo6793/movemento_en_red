@@ -3,103 +3,121 @@ using UnityEngine;
 
 public class PlayerController : NetworkBehaviour
 {
-    public float speed = 6f;
+    [Header("Movement")]
+    public float normalSpeed = 5f;
+    public float boostSpeed = 8f;
+    public float slowSpeed = 2f;
     public float jumpForce = 5f;
 
+    float currentSpeed;
+
     Rigidbody rb;
+    Renderer playerRenderer;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
+
+        playerRenderer = GetComponentInChildren<Renderer>();
+
+        currentSpeed = normalSpeed;
     }
 
     void Update()
     {
         if (!IsOwner) return;
 
-        HandleInput();
-    }
+        HandleMovement();
 
-    void HandleInput()
-    {
-        Vector3 input = new Vector3(
-            Input.GetAxis("Horizontal"),
-            0,
-            Input.GetAxis("Vertical")
-        );
-
-        AuthorityMode mode = GameModeManager.Instance.GetMode();
-
-        // 🔥 MOVIMIENTO
-        if (mode == AuthorityMode.Server || mode == AuthorityMode.ServerRewind)
-        {
-            MoveServerRpc(input);
-        }
-        else if (mode == AuthorityMode.Client)
-        {
-            MoveClient(input);
-        }
-
-        // 🔥 SALTO
         if (Input.GetKeyDown(KeyCode.Space))
         {
             JumpServerRpc();
         }
 
-        // 🔥 REWIND (SOLO PEDIDO AL SERVIDOR)
         if (Input.GetKeyDown(KeyCode.R))
         {
             RewindServerRpc();
         }
     }
 
-    // =========================
-    // MOVIMIENTO
-    // =========================
+    void HandleMovement()
+    {
+        Vector3 input = new Vector3(
+            Input.GetAxisRaw("Horizontal"),
+            0,
+            Input.GetAxisRaw("Vertical")
+        );
+
+        AuthorityMode mode =
+            GameModeManager.Instance.GetMode();
+
+        switch (mode)
+        {
+            case AuthorityMode.Server:
+
+                MoveServerRpc(input);
+
+                break;
+
+            case AuthorityMode.Client:
+
+                MoveClient(input);
+
+                break;
+
+            case AuthorityMode.ServerRewind:
+
+                MoveServerRpc(input);
+
+                break;
+        }
+    }
 
     [ServerRpc]
     void MoveServerRpc(Vector3 input)
     {
-        transform.position += input * speed * Time.deltaTime;
-        ClampToBounds();
+        Vector3 move =
+            input * currentSpeed * Time.deltaTime;
+
+        transform.position += move;
+
+        ClampPosition();
     }
 
     void MoveClient(Vector3 input)
     {
-        transform.position += input * speed * Time.deltaTime;
-    }
+        Vector3 move =
+            input * currentSpeed * Time.deltaTime;
 
-    // =========================
-    // SALTO
-    // =========================
+        transform.position += move;
+
+        ClampPosition();
+    }
 
     [ServerRpc]
     void JumpServerRpc()
     {
-        rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        rb.AddForce(
+            Vector3.up * jumpForce,
+            ForceMode.Impulse
+        );
     }
-
-    // =========================
-    // REWIND (SERVER AUTHORITY)
-    // =========================
 
     [ServerRpc]
     void RewindServerRpc()
     {
-        if (GameModeManager.Instance.GetMode() != AuthorityMode.ServerRewind)
+        if (GameModeManager.Instance.GetMode()
+            != AuthorityMode.ServerRewind)
             return;
 
-        RewindSystem rewind = GetComponent<RewindSystem>();
-        if (rewind == null) return;
+        RewindSystem rewind =
+            GetComponent<RewindSystem>();
 
-        transform.position = rewind.GetPastPosition(1f);
+        transform.position =
+            rewind.GetPastPosition(1f);
     }
 
-    // =========================
-    // LIMITES
-    // =========================
-
-    void ClampToBounds()
+    void ClampPosition()
     {
         Vector3 pos = transform.position;
 
@@ -107,5 +125,37 @@ public class PlayerController : NetworkBehaviour
         pos.z = Mathf.Clamp(pos.z, -5f, 5f);
 
         transform.position = pos;
+    }
+
+    public void ApplyBoost()
+    {
+        currentSpeed = boostSpeed;
+
+        playerRenderer.material.color =
+            Color.green;
+
+        CancelInvoke(nameof(ResetEffect));
+
+        Invoke(nameof(ResetEffect), 10f);
+    }
+
+    public void ApplySlow()
+    {
+        currentSpeed = slowSpeed;
+
+        playerRenderer.material.color =
+            new Color(1f, 0.5f, 0f);
+
+        CancelInvoke(nameof(ResetEffect));
+
+        Invoke(nameof(ResetEffect), 10f);
+    }
+
+    void ResetEffect()
+    {
+        currentSpeed = normalSpeed;
+
+        playerRenderer.material.color =
+            Color.white;
     }
 }
