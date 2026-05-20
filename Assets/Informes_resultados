@@ -1,0 +1,20 @@
+Prueba 1 - Con Interpolación
+En esta prueba el prefab del jugador tiene activada la interpolación por lo tanto el movimiento de los jugadores es suave y más natural y menos saltos.
+
+Prueba 2 - Sin Interpolación
+En esta prueba se ha desactivado la interpolación en el prefab del jugador por lo tanto el movimiento es más brusco y en el cliente se puede ver como el jugador hace pequeños teleports.
+
+Prueba 3 - Autoridad Servidor
+Cuando se pulsa el botón "Server" el movimiento del jugador es más estable y algo más lento.
+
+Prueba 4 - Autoridad Cliente
+Cuando se pulsa el botón "Client" el movimiento es instántaneo y más fluído
+
+Prueba 5 - Server Rewind
+Cuando se pulsa el botón "Rewind" le servidor hace snapshots en el jugador de la última posición en la que estuvo y cuando se pulsa la tecla R el jugador vuelve atrás debido al historial de snapshots del servidor por lo tanto el jugador vuelve a su posición anterior.
+
+Prueba 6 - Situación de red 1
+Tenemos un host en Unity y un cliente abriendo un exe, el juego es fluído y tiene buena sincronización.
+
+Prueba 7 - Situación de red 2
+Al abrir varios exes, conectando varios clientes y intentar moverlos el juego tiene mucho tráfico de red y tiene lag por lo tanto la red es más cargada.

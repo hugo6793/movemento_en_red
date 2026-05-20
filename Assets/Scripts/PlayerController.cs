@@ -30,33 +30,32 @@ public class PlayerController : NetworkBehaviour
 
         AuthorityMode mode = GameModeManager.Instance.GetMode();
 
-        switch (mode)
+        // 🔥 MOVIMIENTO
+        if (mode == AuthorityMode.Server || mode == AuthorityMode.ServerRewind)
         {
-            case AuthorityMode.Server:
-                MoveServerRpc(input);
-                break;
-
-            case AuthorityMode.Client:
-                MoveClient(input);
-                break;
-
-            case AuthorityMode.ServerRewind:
-                MoveServerRpc(input);
-                break;
+            MoveServerRpc(input);
+        }
+        else if (mode == AuthorityMode.Client)
+        {
+            MoveClient(input);
         }
 
+        // 🔥 SALTO
         if (Input.GetKeyDown(KeyCode.Space))
         {
             JumpServerRpc();
         }
 
+        // 🔥 REWIND (SOLO PEDIDO AL SERVIDOR)
         if (Input.GetKeyDown(KeyCode.R))
         {
-            RewindSystem rewind = GetComponent<RewindSystem>();
-
-            transform.position = rewind.GetPastPosition(1f);
+            RewindServerRpc();
         }
     }
+
+    // =========================
+    // MOVIMIENTO
+    // =========================
 
     [ServerRpc]
     void MoveServerRpc(Vector3 input)
@@ -70,11 +69,35 @@ public class PlayerController : NetworkBehaviour
         transform.position += input * speed * Time.deltaTime;
     }
 
+    // =========================
+    // SALTO
+    // =========================
+
     [ServerRpc]
     void JumpServerRpc()
     {
         rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
     }
+
+    // =========================
+    // REWIND (SERVER AUTHORITY)
+    // =========================
+
+    [ServerRpc]
+    void RewindServerRpc()
+    {
+        if (GameModeManager.Instance.GetMode() != AuthorityMode.ServerRewind)
+            return;
+
+        RewindSystem rewind = GetComponent<RewindSystem>();
+        if (rewind == null) return;
+
+        transform.position = rewind.GetPastPosition(1f);
+    }
+
+    // =========================
+    // LIMITES
+    // =========================
 
     void ClampToBounds()
     {

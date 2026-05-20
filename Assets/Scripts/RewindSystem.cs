@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using Unity.Netcode;
 
 public class RewindSystem : MonoBehaviour
 {
@@ -13,8 +14,8 @@ public class RewindSystem : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (!GameModeManager.Instance || 
-            GameModeManager.Instance.GetMode() != AuthorityMode.ServerRewind)
+        // 🔥 SOLO EL SERVER guarda historial
+        if (!NetworkManager.Singleton.IsServer)
             return;
 
         history.Enqueue(new Snapshot
